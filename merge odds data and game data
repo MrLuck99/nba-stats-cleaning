@@ -1,0 +1,29 @@
+# Define the range of years:
+startYear <- 2007
+endYear <- 2023
+
+# Loop through the years
+for (year in startYear:(endYear - 1)) {
+  # Generate file names for game logs and odds
+  game_logs_file <- paste0("gameLogs", year, "_", year + 1)
+  odds_file <- paste0("odds", year, "_", year + 1)
+  
+  # Merge data frames based on "date" and "team" and create new data frame
+  assign(paste0("stats", year, "_", year + 1), merge(get(game_logs_file), get(odds_file), by = c("date", "team")))
+}
+
+data <- rbind(stats2007_2008, stats2008_2009, stats2009_2010, 
+              stats2010_2011, stats2011_2012, stats2012_2013, 
+              stats2013_2014, stats2014_2015, stats2015_2016, 
+              stats2016_2017, stats2017_2018, stats2018_2019, 
+              stats2019_2020, stats2020_2021, stats2021_2022, 
+              stats2022_2023)
+
+# Create temporary data frame to add opponent line data
+oddsDataTemp <- data[, c("date", "team", "opponent", "open", "close",
+                         "moneyLine", "2ndHalf")]
+
+# Merge with original data, matching opponent in original data to team in temporary data
+dataTemp <- merge(data, oddsDataTemp, 
+                  by.x = c("date", "opponent"), 
+                  by.y = c("date", "team"))
