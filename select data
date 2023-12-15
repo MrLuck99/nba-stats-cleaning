@@ -1,0 +1,22 @@
+# Select columns:
+oddsData <- dataTemp[, c("date", "season", "team", "opponent", "score", "oppScore", 
+                         "1st", "2nd", "3rd", "4th", "moneyLine", "oppMoneyLine", 
+                         "tempCloseTotal", "tempCloseSpread")]
+
+# Rename the columns:
+colnames(oddsData) <- c("date", "season", "team", "opponent", "score", "opponentScore", 
+                        "Q1", "Q2", "Q3", "Q4", "moneyLine", "opponentMoneyLine", 
+                        "total", "spread")
+
+######################################################################################################
+
+# Select columns without scoring by quarter:
+oddsData <- dataTemp[, c("date", "season", "team", "opponent", "score", "oppScore", 
+                         "moneyLine", "oppMoneyLine", "tempCloseTotal", "tempCloseSpread")]
+
+# Rename the columns:
+colnames(oddsData) <- c("date", "season", "team", "opponent", "score", "opponentScore", 
+                        "moneyLine", "opponentMoneyLine", "total", "spread")
+
+######################################################################################################
+write_csv(oddsData, "oddsData.csv")
