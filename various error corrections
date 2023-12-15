@@ -1,0 +1,65 @@
+# Apply various fixes to odds data:
+
+dataTemp$openTotal <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$open.x, dataTemp$open.y)
+
+dataTemp$closeTotal <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$close.x, dataTemp$close.y)
+
+dataTemp$openSpread <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$open.y, dataTemp$open.x)
+
+dataTemp$closeSpread <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$close.y, dataTemp$close.x)
+
+dataTemp$secHafTotal <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$`2ndHalf.x`, dataTemp$`2ndHalf.y`)
+
+dataTemp$secHafSpread <- ifelse(dataTemp$moneyLine.x > dataTemp$moneyLine.y, dataTemp$`2ndHalf.y`, dataTemp$`2ndHalf.x`)
+
+# Fix openTotal lines:
+dataTemp <- dataTemp %>%
+  mutate(tempOpenTotal = ifelse(openTotal < 100, openSpread, openTotal))
+
+# Fix openTotal lines part 2:
+dataTemp$tempOpenTotal <- ifelse(dataTemp$tempOpenTotal < 100, 
+                                 dataTemp$closeTotal, dataTemp$tempOpenTotal)
+
+# Fix closeTotal lines:
+dataTemp <- dataTemp %>%
+  mutate(tempCloseTotal = ifelse(closeTotal < 100, closeSpread, closeTotal))
+
+# Fix close total lines part 2:
+dataTemp$tempCloseTotal <- ifelse(dataTemp$tempCloseTotal < 150, 
+                                  dataTemp$secHafTotal * 2, 
+                                  dataTemp$tempCloseTotal)
+
+
+# Fix openSpread:
+dataTemp <- dataTemp %>%
+  mutate(tempOpenSpread = ifelse(openSpread > 25, openTotal, openSpread))
+
+# Fix closeSpread:
+dataTemp <- dataTemp %>%
+  mutate(tempCloseSpread = ifelse(closeSpread > 25, closeTotal, closeSpread))
+
+# Fix second half total:
+dataTemp$secHafTotal <- ifelse(dataTemp$secHafTotal < 80, 
+                               pmax(dataTemp$`2ndHalf.x`, dataTemp$`2ndHalf.y`), 
+                               dataTemp$secHafTotal)
+
+# Fix second half total part 2:
+dataTemp$secHafTotal <- ifelse(dataTemp$secHafTotal < 80, 
+                                  round(dataTemp$tempCloseTotal / 2, .5), 
+                                  dataTemp$secHafTotal)
+
+# Fix second half spread:
+dataTemp$secHafSpread <- ifelse(dataTemp$secHafSpread > 25, 
+                                pmin(dataTemp$`2ndHalf.x`, dataTemp$`2ndHalf.y`), 
+                                dataTemp$secHafSpread)
+
+# Rename moneyLine columns:
+names(dataTemp)[names(dataTemp) == "moneyLine.x"] <- "moneyLine"
+names(dataTemp)[names(dataTemp) == "moneyLine.y"] <- "oppMoneyLine"
+
+# If money lines are the same set spread to zero:
+dataTemp$tempCloseSpread[dataTemp$moneyLine == dataTemp$oppMoneyLine] <- 0
+
+# If money line favorite, set spread to favorite:
+dataTemp$tempCloseSpread[dataTemp$moneyLine < dataTemp$oppMoneyLine] <- 
+  -1 * dataTemp$tempCloseSpread[dataTemp$moneyLine < dataTemp$oppMoneyLine]
