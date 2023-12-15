@@ -1,0 +1,275 @@
+# Install packages
+library(readr)
+library(lubridate)
+
+
+# Create a vector of years:
+years <- c("2007_2008", "2008_2009", "2009_2010", "2010_2011", "2011_2012",
+           "2012_2013", "2013_2014", "2014_2015", "2015_2016", "2016_2017",
+           "2017_2018", "2018_2019", "2019_2020", "2020_2021", "2021_2022", 
+           "2022_2023")
+
+# Load csv files:
+for (year in years) {
+  file_name <- paste0(year, ".csv")
+  assign(paste0("odds", year), read.csv(file_name))
+}
+
+# Add 0 to beginning of date if necessary:
+# List of data frame names
+data_frame_names <- paste0("odds", 2007:2022, "_", 2008:2023)
+
+# Loop through each data frame
+for (df_name in data_frame_names) {
+  # Get the data frame
+  current_df <- get(df_name)
+  
+  # Convert Date to character and add leading zeros
+  current_df$Date <- sprintf("%04d", current_df$Date)
+  
+  # Assign the modified data frame back to the environment
+  assign(df_name, current_df)
+}
+
+# Add year to Date column:
+
+for (i in 2007:2022) {
+  # Construct the data frame names
+  current_df_name <- paste0("odds", i, "_", i + 1)
+  
+  # Get the current data frame
+  current_df <- get(current_df_name)
+  
+  # Check the Date column and update accordingly
+  current_df$Date <- ifelse(current_df$Date > 1000,
+                            paste0(current_df$Date, substr(current_df_name, 5, 8)),
+                            paste0(current_df$Date, substr(current_df_name, 10, 13)))
+  
+  # Update the data frame in the environment
+  assign(current_df_name, current_df)
+}
+
+# Add dashes to Date column:
+
+for (year in 2007:2022) {
+  start_year <- paste0(year, "_", sprintf("%02d", year + 1))
+  df_name <- paste0("odds", start_year)
+  
+  # Check if the data frame exists
+  if (exists(df_name)) {
+    # Modify the Date column
+    assign(df_name, transform(get(df_name),
+                              Date = paste(substr(Date, 1, 2), "-", 
+                                           substr(Date, 3, 4), "-", 
+                                           substr(Date, 5,8))))
+  }
+}
+
+# Change Date column to date
+
+for (df_name in data_frame_names) {
+  # Get the data frame
+  current_df <- get(df_name)
+  
+  # Convert the "Date" column to Date format
+  current_df$Date <- as.Date(current_df$Date, format = "%m - %d - %Y")
+  
+  # Assign the modified data frame back to the global environment
+  assign(df_name, current_df)
+}
+
+# Columns to convert to numeric
+columns_to_convert <- c("Open", "Close", "ML", "X2H")
+
+# Loop through each data frame
+for (df_name in data_frame_names) {
+  # Get the data frame
+  current_df <- get(df_name)
+  
+  # Convert specified columns to numeric and replace NAs with 0
+  current_df[, columns_to_convert] <- lapply(current_df[, columns_to_convert], function(x) as.numeric(x, na.rm = TRUE))
+  current_df[, columns_to_convert][is.na(current_df[, columns_to_convert])] <- 0
+  
+  # Assign the modified data frame back to the global environment
+  assign(df_name, current_df)
+}
+
+# Filter out non regular season games:
+odds2007_2008 <- filter(odds2007_2008, Date >= as.Date("2007-10-30") & 
+                          Date <= as.Date("2008-04-16"))
+
+odds2008_2009 <- filter(odds2008_2009, Date >= as.Date("2008-10-28") & 
+                          Date <= as.Date("2009-04-15"))
+
+odds2009_2010 <- filter(odds2009_2010, Date >= as.Date("2009-10-27") & 
+                          Date <= as.Date("2010-04-15"))
+
+odds2010_2011 <- filter(odds2010_2011, Date >= as.Date("2010-10-26") & 
+                          Date <= as.Date("2011-04-14"))
+
+odds2011_2012 <- filter(odds2011_2012, Date >= as.Date("2011-12-25") & 
+                          Date <= as.Date("2012-04-27"))
+
+odds2012_2013 <- filter(odds2012_2013, Date >= as.Date("2012-10-30") & 
+                          Date <= as.Date("2013-04-17"))
+
+odds2013_2014 <- filter(odds2013_2014, Date >= as.Date("2013-10-29") & 
+                          Date <= as.Date("2014-04-17"))
+
+odds2014_2015 <- filter(odds2014_2015, Date >= as.Date("2014-10-28") & 
+                          Date <= as.Date("2015-04-15"))
+
+odds2015_2016 <- filter(odds2015_2016, Date >= as.Date("2015-10-27") & 
+                          Date <= as.Date("2016-04-13"))
+
+odds2016_2017 <- filter(odds2016_2017, Date >= as.Date("2016-10-25") & 
+                          Date <= as.Date("2017-04-13"))
+
+odds2017_2018 <- filter(odds2017_2018, Date >= as.Date("2017-10-17") & 
+                          Date <= as.Date("2018-04-11"))
+
+odds2018_2019 <- filter(odds2018_2019, Date >= as.Date("2018-10-16") & 
+                          Date <= as.Date("2019-04-10"))
+
+odds2019_2020 <- filter(odds2019_2020, Date >= as.Date("2019-10-22") & 
+                          Date <= as.Date("2020-08-14"))
+
+odds2020_2021 <- filter(odds2020_2021, Date >= as.Date("2020-12-22") & 
+                          Date <= as.Date("2021-05-16"))
+
+odds2021_2022 <- filter(odds2021_2022, Date >= as.Date("2021-10-19") & 
+                          Date <= as.Date("2022-04-11"))
+
+odds2022_2023 <- filter(odds2022_2023, Date >= as.Date("2022-10-18") & 
+                          Date <= as.Date("2023-04-09"))
+
+# Combine odds:
+combinedOdds <- rbind(odds2007_2008, odds2008_2009, odds2009_2010,
+                      odds2010_2011, odds2011_2012, odds2012_2013,
+                      odds2013_2014, odds2014_2015, odds2015_2016,
+                      odds2016_2017, odds2017_2018, odds2018_2019,
+                      odds2019_2020, odds2020_2021, odds2021_2022,
+                      odds2022_2023)
+
+Find <- c("Portland", "SanAntonio", "Utah", "GoldenState",
+"Houston", "LALakers", "Philadelphia",
+"Toronto", "Washington", "Indiana",
+"Milwaukee", "Orlando", "Chicago",
+"NewJersey", "Dallas", "Cleveland",
+"Memphis", "Sacramento", "NewOrleans",
+"Seattle", "Denver", "Detroit",
+"Miami", "Phoenix", "Charlotte",
+"Atlanta", "NewYork", "Boston",
+"Minnesota", "LAClippers", "OklahomaCity",
+"Brooklyn", "Oklahoma City", "LA Clippers")
+
+
+Replace <- c("Portland", "San Antonio", "Utah", "Golden State",
+             "Houston", "LA Lakers", "Philadelphia",
+             "Toronto", "Washington", "Indiana",
+             "Milwaukee", "Orlando", "Chicago",
+             "New Jersey", "Dallas", "Cleveland",
+             "Memphis", "Sacramento", "New Orleans",
+             "Seattle", "Denver", "Detroit",
+             "Miami", "Phoenix", "Charlotte",
+             "Atlanta", "New York", "Boston",
+             "Minnesota", "LA Clippers", "Oklahoma City",
+             "Brooklyn", "Oklahoma City", "LA Clippers")
+
+# Change team abbreviations:
+combinedOdds$Team <- Replace[match(combinedOdds$Team, Find)]
+
+# Rename columns to match game logs:
+colnames(combinedOdds) <- c('date', 'rot', 'VH', 'team', '1st','2nd', '3rd', 
+                            '4th', 'final', 'open', 'close', 'moneyLine', '2ndHalf')
+
+####################################################################################
+
+# Fix some dates:
+combinedOdds <- within(combinedOdds, {
+  date[809:814] <- as.Date("2007-12-25")
+})
+
+combinedOdds <- within(combinedOdds, {
+  date[8243:8252] <- as.Date("2010-12-25")
+})
+
+combinedOdds <- within(combinedOdds, {
+  date[31233:31234] <- as.Date("2020-12-27")
+})
+
+combinedOdds <- within(combinedOdds, {
+  date[8776] <- as.Date("2011-01-29")
+})
+
+# Fix some odds:
+combinedOdds <- within(combinedOdds, {
+  open[22003] <- 195.5
+})
+
+combinedOdds <- within(combinedOdds, {
+  open[29738] <- 11.0
+})
+
+combinedOdds <- within(combinedOdds, {
+  open[29724] <- 5.0
+})
+
+combinedOdds <- within(combinedOdds, {
+  `2ndHalf`[31025] <- 118.0
+})
+
+combinedOdds <- within(combinedOdds, {
+  `2ndHalf`[10529] <- 100.0
+})
+
+####################################################################################
+
+# Separate by season:
+odds2007_2008 <- filter(combinedOdds, date >= as.Date("2007-10-30") & 
+                          date <= as.Date("2008-04-16"))
+
+odds2008_2009 <- filter(combinedOdds, date >= as.Date("2008-10-28") & 
+                          date <= as.Date("2009-04-15"))
+
+odds2009_2010 <- filter(combinedOdds, date >= as.Date("2009-10-27") & 
+                          date <= as.Date("2010-04-15"))
+
+odds2010_2011 <- filter(combinedOdds, date >= as.Date("2010-10-26") & 
+                          date <= as.Date("2011-04-14"))
+
+odds2011_2012 <- filter(combinedOdds, date >= as.Date("2011-12-25") & 
+                          date <= as.Date("2012-04-27"))
+
+odds2012_2013 <- filter(combinedOdds, date >= as.Date("2012-10-30") & 
+                          date <= as.Date("2013-04-17"))
+
+odds2013_2014 <- filter(combinedOdds, date >= as.Date("2013-10-29") & 
+                          date <= as.Date("2014-04-17"))
+
+odds2014_2015 <- filter(combinedOdds, date >= as.Date("2014-10-28") & 
+                          date <= as.Date("2015-04-15"))
+
+odds2015_2016 <- filter(combinedOdds, date >= as.Date("2015-10-27") & 
+                          date <= as.Date("2016-04-13"))
+
+odds2016_2017 <- filter(combinedOdds, date >= as.Date("2016-10-25") & 
+                          date <= as.Date("2017-04-13"))
+
+odds2017_2018 <- filter(combinedOdds, date >= as.Date("2017-10-17") & 
+                          date <= as.Date("2018-04-11"))
+
+odds2018_2019 <- filter(combinedOdds, date >= as.Date("2018-10-16") & 
+                          date <= as.Date("2019-04-10"))
+
+odds2019_2020 <- filter(combinedOdds, date >= as.Date("2019-10-22") & 
+                          date <= as.Date("2020-08-14"))
+
+odds2020_2021 <- filter(combinedOdds, date >= as.Date("2020-12-22") & 
+                          date <= as.Date("2021-05-16"))
+
+odds2021_2022 <- filter(combinedOdds, date >= as.Date("2021-10-19") & 
+                          date <= as.Date("2022-04-11"))
+
+odds2022_2023 <- filter(combinedOdds, date >= as.Date("2022-10-18") & 
+                          date <= as.Date("2023-04-09"))
